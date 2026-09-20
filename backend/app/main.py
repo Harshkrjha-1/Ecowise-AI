@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base, SessionLocal
-from app.api import auth, telemetry, scanner, analytics, agent
+from app.api import auth, telemetry, scanner, analytics, agent, rag
 from app.models.user import User, UserRole
 from app.services.auth_service import get_password_hash
 
@@ -69,12 +69,14 @@ app.include_router(telemetry.router, prefix=settings.API_V1_STR)
 app.include_router(scanner.router, prefix=settings.API_V1_STR)
 app.include_router(analytics.router, prefix=settings.API_V1_STR)
 app.include_router(agent.router, prefix=settings.API_V1_STR)
+app.include_router(rag.router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():
     return {
         "title": settings.PROJECT_NAME,
         "status": "online",
+        "engines": ["Scikit-Learn ML Classifier", "IBM Granite 3.0 RAG", "IBM Bob Agent", "Resource Forecaster"],
         "sdgs": ["SDG 12", "SDG 11", "SDG 13", "SDG 4"],
         "version": "1.0.0",
         "docs": "/docs"
@@ -85,5 +87,7 @@ def health_check():
     return {
         "status": "healthy",
         "database": "connected",
+        "ml_classifier": "ready",
+        "ibm_granite_rag": "ready",
         "version": "1.0.0"
     }
