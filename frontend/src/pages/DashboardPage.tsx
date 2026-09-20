@@ -44,11 +44,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
     const loadTelemetry = async () => {
       try {
         const data = await telemetryApi.getDashboardTelemetry();
-        if (data) {
+        if (data && data.conveyor_throughput && data.actuator_status && data.kpi) {
           setTelemetry(data);
         }
       } catch (e) {
-        console.warn("Using initial telemetry state", e);
+        console.warn("Using default initial telemetry state", e);
       }
     };
     loadTelemetry();
@@ -60,28 +60,42 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
     const interval = setInterval(() => {
       setLiveTickCount((c) => c + 1);
       setTelemetry((prev) => {
-        if (!prev) return defaultTelemetry;
-        const currentProcessed = Math.min(300, prev.conveyor_throughput.processed + (Math.random() > 0.4 ? 1 : 0));
+        const currentProcessed = Math.min(300, (prev?.conveyor_throughput?.processed ?? 230) + (Math.random() > 0.4 ? 1 : 0));
         const updatedEff = parseFloat((95.0 + Math.sin(Date.now() / 2000) * 2.2).toFixed(1));
         const updatedEnergy = parseFloat((15.5 + Math.cos(Date.now() / 3000) * 1.8).toFixed(2));
+        
         return {
-          ...prev,
+          timestamp: prev?.timestamp || "14:22:00",
           efficiency: updatedEff,
           energy_kwh: updatedEnergy,
           conveyor_throughput: {
-            ...prev.conveyor_throughput,
             processed: currentProcessed,
+            target: prev?.conveyor_throughput?.target ?? 300,
             percentage: parseFloat(((currentProcessed / 300) * 100).toFixed(1)),
           },
+          actuator_status: prev?.actuator_status ?? defaultTelemetry.actuator_status,
+          kpi: prev?.kpi ?? defaultTelemetry.kpi,
+          performance_series: prev?.performance_series ?? defaultTelemetry.performance_series,
         };
       });
     }, 2500);
     return () => clearInterval(interval);
   }, [isLiveStreaming]);
 
-  const conveyorPercentage = telemetry.conveyor_throughput.percentage;
-  const actuatorPercentage = telemetry.actuator_status.health_percentage;
+  // Safe Property Extraction with Fallback Defaults
+  const conveyorPercentage = telemetry?.conveyor_throughput?.percentage ?? 76.6;
+  const processedCount = telemetry?.conveyor_throughput?.processed ?? 230;
+  const actuatorPercentage = telemetry?.actuator_status?.health_percentage ?? 95;
+  const activeArms = telemetry?.actuator_status?.active_arms ?? 4;
+  const totalArms = telemetry?.actuator_status?.total_arms ?? 4;
   const purityPercentage = 98.2;
+
+  const currentTask = telemetry?.kpi?.current_task ?? 'Material Classification (Polymer Sort #3)';
+  const totalWasteKg = telemetry?.kpi?.total_waste_kg ?? 1245;
+  const recyclablePercentage = telemetry?.kpi?.recyclable_percentage ?? 62;
+  const anomalyVariance = telemetry?.kpi?.anomaly_variance ?? 0.5;
+
+  const performanceSeries = telemetry?.performance_series ?? defaultTelemetry.performance_series;
 
   return (
     <div className="space-y-6 font-sans">
@@ -137,7 +151,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
             </div>
           </div>
           <div className="mt-3">
-            <h3 className="text-lg font-bold text-white truncate">{telemetry.kpi.current_task}</h3>
+            <h3 className="text-lg font-bold text-white truncate">{currentTask}</h3>
             <div className="flex items-center space-x-2 mt-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-xs text-emerald-400 font-mono font-medium">Pneumatic Arm #2 Engaged</span>
@@ -154,11 +168,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
           </div>
           <div className="mt-3">
             <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-black text-white font-mono">{telemetry.kpi.total_waste_kg.toLocaleString()} kg</span>
-              <span className="text-xs text-emerald-400 font-semibold font-mono">({telemetry.kpi.recyclable_percentage}% Recyclable)</span>
+              <span className="text-2xl font-black text-white font-mono">{totalWasteKg.toLocaleString()} kg</span>
+              <span className="text-xs text-emerald-400 font-semibold font-mono">({recyclablePercentage}% Recyclable)</span>
             </div>
             <div className="w-full bg-zinc-800 h-1.5 rounded-full mt-3 overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${telemetry.kpi.recyclable_percentage}%` }} />
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${recyclablePercentage}%` }} />
             </div>
           </div>
         </div>
@@ -172,7 +186,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
           </div>
           <div className="mt-3">
             <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-black text-white font-mono">{telemetry.kpi.anomaly_variance}%</span>
+              <span className="text-2xl font-black text-white font-mono">{anomalyVariance}%</span>
               <span className="text-xs text-zinc-400">Variance from baseline</span>
             </div>
             <div className="flex items-center space-x-1.5 text-xs text-emerald-400 mt-2 font-mono">
@@ -210,7 +224,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
 
           <div className="h-72 w-full min-h-[280px] pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={telemetry.performance_series} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={performanceSeries} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="efficiencyGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10B981" stopOpacity={0.35}/>
@@ -267,7 +281,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-bold text-white truncate">Conveyor Throughput</h4>
-                <p className="text-xs text-emerald-400 font-mono mt-0.5">{telemetry.conveyor_throughput.processed} / 300 Processed</p>
+                <p className="text-xs text-emerald-400 font-mono mt-0.5">{processedCount} / 300 Processed</p>
                 <p className="text-[11px] text-zinc-500 mt-1">Speed: 38 m/min</p>
               </div>
             </div>
@@ -296,7 +310,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-bold text-white truncate">Sorting Arms Status</h4>
-                <p className="text-xs text-cyan-400 font-mono mt-0.5">{telemetry.actuator_status.active_arms} / {telemetry.actuator_status.total_arms} Arms Active</p>
+                <p className="text-xs text-cyan-400 font-mono mt-0.5">{activeArms} / {totalArms} Arms Active</p>
                 <p className="text-[11px] text-zinc-500 mt-1">Pneumatic Calibration: Nominal</p>
               </div>
             </div>
