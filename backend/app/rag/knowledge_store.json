@@ -1,0 +1,62 @@
+[
+  {
+    "id": "GR-883",
+    "preset": "pet_bottle",
+    "title": "Campus Circular Economy Guideline Sec 4.2 - Polyethylene Terephthalate Recycling Standards",
+    "citation": "Campus Circular Economy Guideline Sec 4.2 - Polyethylene Terephthalate Recycling Standards",
+    "section": "Article 4: High-Density Polymer Recovery",
+    "confidence_score": 0.962,
+    "keywords": ["pet", "plastic", "polymer", "bottle", "polyethylene", "packaging"],
+    "content": "Object classified as high-purity PET #1 (Polyethylene Terephthalate). Optical NIR spectral response matches food-grade beverage containers. Recommended action: Pneumatic flaking and pelletizing at Facility B. Contamination levels must remain below 1.5% to ensure melt index compliance.",
+    "effective_date": "2026-01-15",
+    "compliance_tier": "ISO 14001:2024 Tier-1"
+  },
+  {
+    "id": "GR-419",
+    "preset": "aluminum_can",
+    "title": "Zero-Waste Campus Operations Standard ISO 14001:2024",
+    "citation": "Zero-Waste Campus Operations Standard ISO 14001:2024",
+    "section": "Section 9: Non-Ferrous Metal Circularity",
+    "confidence_score": 0.989,
+    "keywords": ["aluminum", "metal", "can", "extrusion", "non-ferrous", "beverage"],
+    "content": "Object identified as 3004-alloy Aluminum alloy beverage can. Infinitely recyclable with 95% energy savings compared to primary extraction. Direct melt & extrusion stream to compacting unit M1.",
+    "effective_date": "2025-11-20",
+    "compliance_tier": "ISO 14001:2024 Tier-1"
+  },
+  {
+    "id": "GR-905",
+    "preset": "ewaste",
+    "title": "Campus Hazardous Waste Protocols & EPA Compliance Framework Art 7",
+    "citation": "Campus Hazardous Waste Protocols & EPA Compliance Framework Art 7",
+    "section": "Article 7: E-Waste & Precious Metals Recovery",
+    "confidence_score": 0.975,
+    "keywords": ["ewaste", "circuit", "pcb", "electronic", "copper", "solder", "lead"],
+    "content": "Contains copper, tin, and trace precious metals. Hazardous solder present. Mandated quarantine in Vault E4 electro-recycling container to prevent heavy metal leaching into campus runoff.",
+    "effective_date": "2026-03-02",
+    "compliance_tier": "EPA Subtitle C Hazardous Standard"
+  },
+  {
+    "id": "GR-112",
+    "preset": "cardboard",
+    "title": "Sustainable Packaging & Paper Fiber Policy v3.1",
+    "citation": "Sustainable Packaging & Paper Fiber Policy v3.1",
+    "section": "Section 3: Cellulosic Pulping Moisture Controls",
+    "confidence_score": 0.938,
+    "keywords": ["cardboard", "paper", "box", "kraft", "cellulose", "pulping"],
+    "content": "Uncontaminated kraft paperboard detected. Moisture index within 8% normal limits. Suitable for high-yield hydropulping in shredder bin P3.",
+    "effective_date": "2025-09-10",
+    "compliance_tier": "Campus Paper Loop Std"
+  },
+  {
+    "id": "GR-774",
+    "preset": "organic",
+    "title": "Campus Biodigesters & Organic Loop Protocol",
+    "citation": "Campus Biodigesters & Organic Loop Protocol",
+    "section": "Section 5: Anaerobic Digestion Nutrient Balance",
+    "confidence_score": 0.951,
+    "keywords": ["organic", "food", "compost", "biogas", "nitrogen", "fertilizer"],
+    "content": "Nitrogen-rich organic matter detected. Direct intake into aerobic digester line #2 for 14-day rapid composting cycle into campus agricultural fertilizer.",
+    "effective_date": "2026-02-01",
+    "compliance_tier": "Zero Landfill Organic Directive"
+  }
+]
