@@ -83,4 +83,4 @@ class ProductionIBMGraniteRAG:
         scored_docs.sort(key=lambda x: x["similarity_score"], reverse=True)
         return scored_docs
 
-granite_rag_engine = ProductionIBMGraniteRAGEngine()
+granite_rag_engine = ProductionIBMGraniteRAG()
