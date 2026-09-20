@@ -6,7 +6,7 @@
 [![Vite](https://img.shields.org/badge/Vite-5.1.0-646CFF.svg)](https://vitejs.dev)
 [![Tailwind CSS](https://img.shields.org/badge/Tailwind-3.4.1-38B2AC.svg)](https://tailwindcss.com)
 
-EcoWise AI is an industrial sustainability platform designed for automated campus material sorting, real-time telemetry analytics, and Human-in-the-Loop agentic resource management. Powered by FastAPI, React, Recharts, and IBM Granite RAG grounding.
+EcoWise AI is an industrial sustainability platform designed for automated campus material sorting, real-time telemetry analytics, and Human-in-the-Loop agentic resource management. Powered by FastAPI, React, Recharts, Scikit-Learn ML classifiers, and IBM Granite RAG grounding.
 
 ---
 
@@ -47,31 +47,50 @@ EcoWise AI is an industrial sustainability platform designed for automated campu
 Ecowise AI/
 ├── backend/
 │   ├── app/
-│   │   ├── api/          # FastAPI routers (auth, telemetry, scanner, analytics, agent)
-│   │   ├── models/       # SQLAlchemy ORM models
-│   │   ├── schemas/      # Pydantic validation schemas
-│   │   ├── services/     # Auth & business logic
-│   │   ├── config.py     # Environment configurations
-│   │   ├── database.py   # SQLite / PostgreSQL connection setup
-│   │   └── main.py       # Main FastAPI application entrypoint & user seeder
-│   ├── requirements.txt  # Python package dependencies
-│   └── ecowise.db        # SQLite database
+│   │   ├── api/                      # FastAPI routers
+│   │   │   ├── agent.py              # EcoAction & IBM Bob Agent decision endpoints
+│   │   │   ├── analytics.py          # ML resource forecaster endpoints
+│   │   │   ├── auth.py               # JWT authentication endpoints
+│   │   │   ├── deps.py               # Dependency injection
+│   │   │   ├── rag.py                # IBM Granite RAG endpoints
+│   │   │   ├── scanner.py            # Computer Vision & classification endpoints
+│   │   │   └── telemetry.py          # Real-time conveyor performance endpoints
+│   │   ├── ml/                       # Machine Learning Classifier Engine
+│   │   │   ├── models/
+│   │   │   │   └── waste_classifier_v1.pkl # Serialized Scikit-Learn model weights
+│   │   │   ├── classifier.py         # Production ML inference engine
+│   │   │   └── train_classifier.py   # Model training & feature extraction pipeline
+│   │   ├── rag/                      # IBM Granite RAG Engine
+│   │   │   ├── granite_rag.py        # TF-IDF & Cosine similarity vector search
+│   │   │   └── knowledge_store.json  # Grounded policy & ISO 14001 document store
+│   │   ├── services/                 # Agentic & forecasting services
+│   │   │   ├── auth_service.py       # Password hashing & JWT tokens
+│   │   │   ├── ibm_bob_agent.py      # IBM Bob Agentic Decision Engine
+│   │   │   └── resource_forecaster.py# ML Ridge Regression energy forecaster
+│   │   ├── models/                   # SQLAlchemy ORM database models
+│   │   ├── schemas/                  # Pydantic validation schemas
+│   │   ├── config.py                 # Application settings
+│   │   ├── database.py               # DB connection manager
+│   │   └── main.py                   # Main FastAPI application & user seeder
+│   ├── tests/                        # Backend unit & integration test suite
+│   ├── requirements.txt              # Python package dependencies
+│   └── ecowise.db                    # SQLite database
 ├── frontend/
 │   ├── src/
-│   │   ├── context/      # AuthContext provider & state
-│   │   ├── pages/        # Login, Dashboard, Scanner, Analytics, Sensors, Agent, KB views
-│   │   ├── services/     # Axios REST API client with mock fallbacks
-│   │   ├── types/        # TypeScript interfaces (auth, telemetry, scanner, agent)
-│   │   ├── App.tsx       # Main application shell & navigation router
-│   │   ├── main.tsx      # React entrypoint
-│   │   └── index.css     # Tailwind CSS styles
-│   ├── index.html        # Main HTML layout
-│   ├── package.json      # NPM dependencies & scripts
-│   ├── tailwind.config.js# Custom Tailwind CSS configuration
-│   ├── tsconfig.json     # TypeScript configuration
-│   └── vite.config.ts    # Vite build pipeline setup
-├── .gitignore            # Git exclusion rules
-└── README.md             # Project documentation
+│   │   ├── context/                  # AuthContext provider & state
+│   │   ├── pages/                    # Login, Dashboard, Scanner, Analytics, Sensors, Agent, KB views
+│   │   ├── services/                 # Axios REST API client with mock fallbacks
+│   │   ├── types/                    # TypeScript interfaces (auth, telemetry, scanner, agent)
+│   │   ├── App.tsx                   # Main application shell & navigation router
+│   │   ├── main.tsx                  # React entrypoint
+│   │   └── index.css                 # Tailwind CSS styles
+│   ├── index.html                    # Main HTML layout
+│   ├── package.json                  # NPM dependencies & scripts
+│   ├── tailwind.config.js            # Custom Tailwind CSS configuration
+│   ├── tsconfig.json                 # TypeScript configuration
+│   └── vite.config.ts                # Vite build pipeline setup
+├── .gitignore                        # Git exclusion rules
+└── README.md                         # Project documentation
 ```
 
 ---
@@ -108,21 +127,3 @@ npm run dev
 - **Student / Campus Access**:
   - Email: `student@ecowise.ai`
   - Password: `student123`
-
----
-
-## 📦 Push to GitHub Instructions
-
-To upload this repository to GitHub:
-
-1. Create a new empty repository on [GitHub](https://github.com/new).
-2. Open terminal in the project root directory (`c:\Users\HARSH\Documents\Ecowise AI`) and run:
-
-```bash
-git init
-git add .
-git commit -m "Initial commit: EcoWise AI Full-Stack Platform"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git
-git push -u origin main
-```
