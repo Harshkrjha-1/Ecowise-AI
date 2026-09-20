@@ -9,7 +9,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000,
+  timeout: 1500, // Short timeout for instant client fallback on static deployments
 });
 
 api.interceptors.request.use((config) => {
@@ -26,7 +26,6 @@ export const authApi = {
       const response = await api.post<AuthResponse>('/auth/login', data);
       return response.data;
     } catch {
-      // Fallback mock login for client demo
       const isOperator = data.email.includes('admin') || data.email.includes('operator');
       const mockUser: User = {
         id: isOperator ? 1 : 2,
@@ -45,6 +44,7 @@ export const authApi = {
       };
     }
   },
+
   register: async (data: RegisterData): Promise<AuthResponse> => {
     try {
       const response = await api.post<AuthResponse>('/auth/register', data);
@@ -67,12 +67,20 @@ export const authApi = {
       };
     }
   },
+
   getMe: async (): Promise<User> => {
     try {
       const response = await api.get<User>('/auth/me');
       return response.data;
     } catch {
-      // Fallback user if token exists in localStorage
+      try {
+        const storedUser = localStorage.getItem('ecowise_user');
+        if (storedUser) {
+          return JSON.parse(storedUser);
+        }
+      } catch (e) {
+        console.warn(e);
+      }
       return {
         id: 1,
         email: 'operator@ecowise.ai',
@@ -134,7 +142,6 @@ export const scannerApi = {
       const res = await api.get<{ status: string; result: ScannerResult }>(`/scanner/analyze?preset=${presetKey}`);
       return res.data.result;
     } catch {
-      // Mock fallback map
       const mockMap: Record<string, ScannerResult> = {
         pet_bottle: {
           item_name: 'PET Plastic Bottle',
