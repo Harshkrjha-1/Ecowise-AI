@@ -2,25 +2,54 @@ import React, { useState, useEffect } from 'react';
 import { telemetryApi } from '../services/api';
 import { DashboardTelemetry } from '../types/app';
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { 
-  Cpu, Activity, Zap, CheckCircle2, RefreshCw, AlertTriangle, Layers, ArrowUpRight, TrendingUp, ShieldCheck
+  Cpu, Activity, CheckCircle2, Layers, ArrowUpRight, TrendingUp, ShieldCheck
 } from 'lucide-react';
 
 interface DashboardPageProps {
   onNavigateTab?: (tab: string) => void;
 }
 
+const defaultTelemetry: DashboardTelemetry = {
+  timestamp: "14:22:00",
+  efficiency: 95.4,
+  energy_kwh: 15.8,
+  conveyor_throughput: { processed: 230, target: 300, percentage: 76.6 },
+  actuator_status: { active_arms: 4, total_arms: 4, health_percentage: 95 },
+  kpi: {
+    current_task: 'Material Classification (Polymer Sort #3)',
+    total_waste_kg: 1245,
+    recyclable_percentage: 62,
+    anomaly_variance: 0.5,
+  },
+  performance_series: [
+    { time: '08:00', efficiency: 92, energy: 14.5 },
+    { time: '10:00', efficiency: 95, energy: 16.2 },
+    { time: '12:00', efficiency: 94, energy: 18.1 },
+    { time: '14:00', efficiency: 97, energy: 15.8 },
+    { time: '16:00', efficiency: 96, energy: 16.9 },
+    { time: '18:00', efficiency: 98, energy: 14.8 },
+    { time: '20:00', efficiency: 95, energy: 15.2 },
+  ],
+};
+
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) => {
-  const [telemetry, setTelemetry] = useState<DashboardTelemetry | null>(null);
+  const [telemetry, setTelemetry] = useState<DashboardTelemetry>(defaultTelemetry);
   const [isLiveStreaming, setIsLiveStreaming] = useState(true);
   const [liveTickCount, setLiveTickCount] = useState(0);
 
   useEffect(() => {
     const loadTelemetry = async () => {
-      const data = await telemetryApi.getDashboardTelemetry();
-      setTelemetry(data);
+      try {
+        const data = await telemetryApi.getDashboardTelemetry();
+        if (data) {
+          setTelemetry(data);
+        }
+      } catch (e) {
+        console.warn("Using initial telemetry state", e);
+      }
     };
     loadTelemetry();
   }, []);
@@ -31,7 +60,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
     const interval = setInterval(() => {
       setLiveTickCount((c) => c + 1);
       setTelemetry((prev) => {
-        if (!prev) return prev;
+        if (!prev) return defaultTelemetry;
         const currentProcessed = Math.min(300, prev.conveyor_throughput.processed + (Math.random() > 0.4 ? 1 : 0));
         const updatedEff = parseFloat((95.0 + Math.sin(Date.now() / 2000) * 2.2).toFixed(1));
         const updatedEnergy = parseFloat((15.5 + Math.cos(Date.now() / 3000) * 1.8).toFixed(2));
@@ -50,23 +79,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
     return () => clearInterval(interval);
   }, [isLiveStreaming]);
 
-  if (!telemetry) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex items-center space-x-3 text-emerald-400">
-          <RefreshCw className="w-6 h-6 animate-spin" />
-          <span className="text-sm font-medium">Connecting to Operation Telemetry Stream...</span>
-        </div>
-      </div>
-    );
-  }
-
   const conveyorPercentage = telemetry.conveyor_throughput.percentage;
   const actuatorPercentage = telemetry.actuator_status.health_percentage;
   const purityPercentage = 98.2;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Top Banner / Operational Quick Bar */}
       <div className="bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950 border border-zinc-800 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
         <div className="flex items-center space-x-4">
@@ -111,7 +129,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
 
       {/* Live KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* KPI Card 1 */}
         <div className="bg-zinc-900/90 border border-zinc-800 p-5 rounded-2xl shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Current Task</span>
@@ -128,7 +145,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
           </div>
         </div>
 
-        {/* KPI Card 2 */}
         <div className="bg-zinc-900/90 border border-zinc-800 p-5 rounded-2xl shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Total Waste Processed</span>
@@ -141,14 +157,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
               <span className="text-2xl font-black text-white font-mono">{telemetry.kpi.total_waste_kg.toLocaleString()} kg</span>
               <span className="text-xs text-emerald-400 font-semibold font-mono">({telemetry.kpi.recyclable_percentage}% Recyclable)</span>
             </div>
-            {/* Progress bar mini */}
             <div className="w-full bg-zinc-800 h-1.5 rounded-full mt-3 overflow-hidden">
               <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${telemetry.kpi.recyclable_percentage}%` }} />
             </div>
           </div>
         </div>
 
-        {/* KPI Card 3 */}
         <div className="bg-zinc-900/90 border border-zinc-800 p-5 rounded-2xl shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Anomaly Detection</span>
@@ -169,10 +183,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
         </div>
       </div>
 
-      {/* Main Grid Section: Top Performance Graph & Status Radial Gauges */}
+      {/* Recharts & Radial Gauges */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Recharts Area/Line Chart (2 cols) */}
         <div className="lg:col-span-2 bg-zinc-900/90 border border-zinc-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -196,7 +208,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
             </div>
           </div>
 
-          <div className="h-72 w-full pt-2">
+          <div className="h-72 w-full min-h-[280px] pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={telemetry.performance_series} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -223,7 +235,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
           </div>
         </div>
 
-        {/* Status Radial Gauges Side Column */}
+        {/* Radial Gauges */}
         <div className="bg-zinc-900/90 border border-zinc-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between space-y-6">
           <div className="border-b border-zinc-800 pb-3">
             <h3 className="text-base font-bold text-white tracking-tight">Actuator & Gauge Status</h3>
@@ -231,7 +243,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
           </div>
 
           <div className="space-y-6 my-auto">
-            {/* Radial Gauge 1: Conveyor Throughput */}
             <div className="flex items-center space-x-4 bg-zinc-950/60 p-4 rounded-xl border border-zinc-800">
               <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -261,7 +272,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
               </div>
             </div>
 
-            {/* Radial Gauge 2: Sorting Arms / Actuator Status */}
             <div className="flex items-center space-x-4 bg-zinc-950/60 p-4 rounded-xl border border-zinc-800">
               <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -291,7 +301,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
               </div>
             </div>
 
-            {/* Radial Gauge 3: Material Purity Index */}
             <div className="flex items-center space-x-4 bg-zinc-950/60 p-4 rounded-xl border border-zinc-800">
               <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -320,10 +329,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
                 <p className="text-[11px] text-zinc-500 mt-1">Contamination &lt;0.5%</p>
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
   );

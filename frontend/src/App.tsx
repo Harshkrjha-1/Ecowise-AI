@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -9,8 +9,67 @@ import { SensorsPage } from './pages/SensorsPage';
 import { AgentPage } from './pages/AgentPage';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { 
-  Leaf, LayoutDashboard, Scan, Cpu, BarChart3, Bot, BookOpen, Bell, LogOut, User as UserIcon, Shield, Search, ChevronDown, CheckCircle2, AlertTriangle, Sparkles, RefreshCw, X
+  Leaf, LayoutDashboard, Scan, Cpu, BarChart3, Bot, BookOpen, Bell, LogOut, Shield, ChevronDown, RefreshCw, AlertTriangle
 } from 'lucide-react';
+
+// Error Boundary Component to prevent Blank Screen crashes
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class GlobalErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
+    hasError: false,
+    error: null,
+  };
+
+  public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught Error caught by GlobalErrorBoundary:", error, errorInfo);
+  }
+
+  public handleReset = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6 font-sans">
+          <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl text-center space-y-4">
+            <div className="p-3 bg-rose-500/20 text-rose-400 rounded-2xl border border-rose-500/30 inline-block mb-2">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <h2 className="text-xl font-bold text-white">System Interface Recovered</h2>
+            <p className="text-xs text-zinc-400 leading-relaxed font-mono">
+              A runtime rendering state occurred. Click reset below to re-initialize your session smoothly.
+            </p>
+            <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800 text-[11px] font-mono text-zinc-400 text-left overflow-x-auto max-h-24">
+              {this.state.error?.message || "Render fallback triggered"}
+            </div>
+            <button
+              onClick={this.handleReset}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/60 transition"
+            >
+              Reset Session & Re-initialize
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function MainApp() {
   const { user, isAuthenticated, logout, isLoading } = useAuth();
@@ -32,15 +91,13 @@ function MainApp() {
     return () => clearInterval(interval);
   }, []);
 
-  // Notifications list
-  const [notifications, setNotifications] = useState([
-    { id: '1', title: 'Science Block Contamination Spike', time: '14:22 PM', level: 'high', read: false },
-    { id: '2', title: 'Sorting Arm #2 Calibration Passed', time: '13:50 PM', level: 'nominal', read: false },
-    { id: '3', title: 'Granite RAG Rule Sync Completed', time: '12:00 PM', level: 'info', read: false },
-  ]);
+  const notifications = [
+    { id: '1', title: 'Science Block Contamination Spike', time: '14:22 PM', level: 'high' },
+    { id: '2', title: 'Sorting Arm #2 Calibration Passed', time: '13:50 PM', level: 'nominal' },
+    { id: '3', title: 'Granite RAG Rule Sync Completed', time: '12:00 PM', level: 'info' },
+  ];
 
   const markAllNotificationsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadNotifications(0);
   };
 
@@ -55,14 +112,13 @@ function MainApp() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col justify-between">
-        {/* Simple Top Header for Auth view */}
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col justify-between font-sans">
         <header className="border-b border-zinc-800 bg-zinc-900/80 backdrop-blur sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/40 shadow-lg shadow-emerald-950/50">
+              <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/40 shadow-lg">
                 <Leaf className="w-6 h-6" />
               </div>
               <div>
@@ -116,7 +172,6 @@ function MainApp() {
     );
   }
 
-  // Sidebar navigation menu items
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'scanner', label: 'Smart Waste Scanner', icon: Scan },
@@ -126,13 +181,14 @@ function MainApp() {
     { id: 'kb', label: 'Knowledge Base', icon: BookOpen },
   ];
 
+  const userInitial = (user?.full_name || 'Operator').charAt(0).toUpperCase();
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex overflow-hidden font-sans">
       
-      {/* Left Dark Navigation Sidebar */}
+      {/* Sidebar */}
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 shrink-0 flex flex-col justify-between hidden md:flex">
         <div>
-          {/* Brand Header */}
           <div className="p-5 border-b border-zinc-800 flex items-center space-x-3">
             <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/40 shadow-md">
               <Leaf className="w-6 h-6" />
@@ -143,7 +199,6 @@ function MainApp() {
             </div>
           </div>
 
-          {/* Navigation Links */}
           <nav className="p-4 space-y-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -169,7 +224,6 @@ function MainApp() {
           </nav>
         </div>
 
-        {/* Bottom System Status Widget */}
         <div className="p-4 border-t border-zinc-800 m-3 bg-zinc-950/70 rounded-xl space-y-2">
           <div className="flex items-center justify-between text-[11px] font-mono">
             <span className="text-zinc-400">AI Engine:</span>
@@ -184,13 +238,10 @@ function MainApp() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Panel */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
-        {/* Top Operational Header */}
         <header className="bg-zinc-900/90 border-b border-zinc-800 sticky top-0 z-40 backdrop-blur px-6 py-3.5 flex items-center justify-between">
-          
-          {/* Mobile Tab Select Dropdown / Left Header Title */}
           <div className="flex items-center space-x-4">
             <div className="md:hidden">
               <select
@@ -214,10 +265,7 @@ function MainApp() {
             </div>
           </div>
 
-          {/* Header Right Actions: Notifications & User Profile */}
           <div className="flex items-center space-x-4">
-            
-            {/* Quick-action Notifications Bell */}
             <div className="relative">
               <button
                 type="button"
@@ -233,7 +281,6 @@ function MainApp() {
                 )}
               </button>
 
-              {/* Notifications Dropdown Panel */}
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
@@ -260,7 +307,6 @@ function MainApp() {
               )}
             </div>
 
-            {/* User Profile Avatar & Dropdown */}
             <div className="relative">
               <button
                 type="button"
@@ -268,23 +314,22 @@ function MainApp() {
                 className="flex items-center space-x-3 p-1.5 pl-2.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 rounded-xl transition"
               >
                 <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-xs font-mono">
-                  {user?.full_name ? user.full_name.charAt(0) : 'O'}
+                  {userInitial}
                 </div>
                 <div className="text-left hidden sm:block">
-                  <div className="text-xs font-bold text-white truncate max-w-[120px]">{user?.full_name}</div>
-                  <div className="text-[10px] font-mono text-emerald-400 uppercase font-semibold">{user?.role}</div>
+                  <div className="text-xs font-bold text-white truncate max-w-[120px]">{user?.full_name || 'Operator'}</div>
+                  <div className="text-[10px] font-mono text-emerald-400 uppercase font-semibold">{user?.role || 'admin'}</div>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
               </button>
 
-              {/* Profile Dropdown */}
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl z-50 p-3 space-y-2">
                   <div className="p-2 border-b border-zinc-800">
-                    <p className="text-xs font-bold text-white truncate">{user?.full_name}</p>
-                    <p className="text-[11px] text-zinc-400 truncate">{user?.email}</p>
+                    <p className="text-xs font-bold text-white truncate">{user?.full_name || 'Operator'}</p>
+                    <p className="text-[11px] text-zinc-400 truncate">{user?.email || 'operator@ecowise.ai'}</p>
                     <span className="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-mono">
-                      {user?.department}
+                      {user?.department || 'Operations'}
                     </span>
                   </div>
                   <button
@@ -304,7 +349,6 @@ function MainApp() {
           </div>
         </header>
 
-        {/* Viewport Render Area */}
         <main className="p-6 flex-1 max-w-7xl w-full mx-auto">
           {activeTab === 'dashboard' && <DashboardPage onNavigateTab={(tab) => setActiveTab(tab)} />}
           {activeTab === 'scanner' && <ScannerPage />}
@@ -321,8 +365,10 @@ function MainApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <GlobalErrorBoundary>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </GlobalErrorBoundary>
   );
 }
